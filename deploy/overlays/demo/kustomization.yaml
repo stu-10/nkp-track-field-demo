@@ -6,5 +6,5 @@ resources:
   - namespace.yaml
 images:
   - name: ghcr.io/replace-owner/cloud-native-games
-    newName: ghcr.io/replace-owner/cloud-native-games
-    newTag: bootstrap
+    newName: ghcr.io/stu-10/nkp-track-field-demo
+    digest: sha256:3117f492fed9f77cc945801a40c4b188175ef3d0741f3f802115bb42a63c33b6
