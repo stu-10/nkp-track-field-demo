@@ -101,7 +101,7 @@ NKP reconciliation, Kubernetes server-side admission, external address allocatio
 
 ## Next releases
 
-Hurdles and long jump; optional shared leaderboard API and database; optional real workload metrics. The UI's platform chips describe the intended architecture, not live cluster telemetry. The artwork and game logic are original. The Nutanix wordmark is rendered as plain text; add approved logo assets if required by your organisation.
+Hurdles and long jump; optional shared leaderboard API and database; optional real workload metrics. The UI's platform chips describe the intended architecture, not live cluster telemetry. The artwork and game logic are original. The header uses the supplied white Nutanix SVG logo, sized proportionally for desktop and mobile.
 
 Technical references:
 - https://fluxcd.io/flux/components/kustomize/kustomizations/

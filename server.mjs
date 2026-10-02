@@ -2,8 +2,8 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 const root = new URL('./app/', import.meta.url);
-const files = new Map([['/', 'index.html'], ['/index.html', 'index.html'], ['/style.css', 'style.css'], ['/game.js', 'game.js'], ['/race.js', 'race.js']]);
-const mime = {html:'text/html', css:'text/css', js:'text/javascript'};
+const files = new Map([['/', 'index.html'], ['/index.html', 'index.html'], ['/style.css', 'style.css'], ['/game.js', 'game.js'], ['/race.js', 'race.js'], ['/nutanix-logo.svg', 'nutanix-logo.svg']]);
+const mime = {html:'text/html', css:'text/css', js:'text/javascript', svg:'image/svg+xml'};
 const server = createServer(async (req, res) => {
   const path = new URL(req.url, 'http://localhost').pathname;
   res.setHeader('X-Content-Type-Options', 'nosniff');
