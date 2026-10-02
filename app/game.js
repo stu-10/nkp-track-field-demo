@@ -10,7 +10,44 @@ function step(side){race.step(side,performance.now());}
 document.addEventListener('keydown',e=>{if(['a','l','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();if(!e.repeat)step(e.key==='a'||e.key==='ArrowLeft'?'left':'right');}});
 for(const side of ['left','right'])$(side).addEventListener('pointerdown',e=>{e.preventDefault();step(side);});
 document.addEventListener('visibilitychange',()=>{if(document.hidden && ['countdown','running'].includes(race.state)){race.reset();show('Race paused','The tab was hidden. Start a fresh race.');}});
-function athlete(x,y,color,phase){ctx.fillStyle='#ead3bd';ctx.fillRect(x-4,y-38,10,10);ctx.fillStyle=color;ctx.fillRect(x-6,y-28,13,17);ctx.fillStyle='#ece9f5';const s=Math.sin(phase)*9;ctx.fillRect(x-6+s,y-11,5,14);ctx.fillRect(x+2-s,y-11,5,14);ctx.fillStyle='#16131f';ctx.fillRect(x-7+s,y+1,9,4);ctx.fillRect(x+1-s,y+1,9,4);ctx.fillStyle='#ead3bd';ctx.fillRect(x-11-s/2,y-26,5,14);ctx.fillRect(x+8+s/2,y-26,5,14);}
+// Side-on sprint cycle: grounded stance, lifted recovery, and opposing arms.
+function athlete(x,y,color,distance,speed,lane){
+ const moving=speed>.05, effort=Math.min(1,speed/10);
+ const phase=distance*Math.PI*2/3.2+lane*.7;
+ const bob=moving?Math.cos(phase*2)*1.1*effort:0;
+ const hip={x:x,y:y-20+bob}, shoulder={x:x+2+3*effort,y:y-34+bob};
+ const skin=['#c58b62','#ead3bd','#dba579','#a86d4d','#e0b18e'][lane];
+ function stroke(points,width,ink){ctx.beginPath();ctx.moveTo(points[0].x,points[0].y);for(const p of points.slice(1))ctx.lineTo(p.x,p.y);ctx.lineWidth=width;ctx.strokeStyle=ink;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();}
+ function leg(offset,far){
+  const t=((phase/(Math.PI*2)+offset)%1+1)%1;
+  const reach=4+7*effort;
+  // The planted foot moves backwards beneath the body; recovery lifts the shoe.
+  const foot=moving?(t<.5?{x:x+reach*(1-4*t),y:y}:{x:x-reach*Math.cos((t-.5)*Math.PI*2),y:y-Math.sin((t-.5)*Math.PI*2)*(5+10*effort)}):{x:x+(far?-4:5),y:y};
+  const dx=foot.x-hip.x,dy=foot.y-hip.y,length=Math.hypot(dx,dy);
+  const bend=Math.sqrt(Math.max(0,12*12-length*length/4));
+  const knee={x:(hip.x+foot.x)/2+bend*dy/length,y:(hip.y+foot.y)/2-bend*dx/length};
+  stroke([hip,knee],5,far?'#767080':'#ece9f5');
+  stroke([knee,foot],3.5,far?'#956a50':skin);
+  stroke([{x:foot.x-2,y:foot.y},{x:foot.x+5,y:foot.y-1}],3,far?'#292332':'#fff');
+ }
+ function arm(offset,far){
+  const swing=moving?Math.sin(phase+offset)*.9*effort:0;
+  const elbow={x:shoulder.x+Math.sin(swing)*9,y:shoulder.y+Math.cos(swing)*9};
+  const hand={x:elbow.x+Math.cos(swing)*8,y:elbow.y-Math.sin(swing)*8-3};
+  stroke([shoulder,elbow,hand],3,far?'#956a50':skin);
+ }
+ ctx.save();
+ ctx.fillStyle='#23183b55';ctx.beginPath();ctx.ellipse(x+1,y+3,14,2.5,0,0,Math.PI*2);ctx.fill();
+ arm(Math.PI,true);leg(.5,true);
+ stroke([hip,shoulder],9,color);
+ stroke([{x:hip.x-3,y:hip.y},{x:hip.x+3,y:hip.y}],6,'#342a4c');
+ leg(0,false);arm(0,false);
+ stroke([shoulder,{x:shoulder.x+1,y:shoulder.y-4}],3,skin);
+ ctx.fillStyle=skin;ctx.beginPath();ctx.ellipse(shoulder.x+1,shoulder.y-7,4,5,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#292332';ctx.beginPath();ctx.ellipse(shoulder.x,shoulder.y-10,4,2.5,-.2,Math.PI,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#292332';ctx.fillRect(shoulder.x+3,shoulder.y-8,1,1);
+ ctx.restore();
+}
 function draw(now){
  const w=1100;ctx.fillStyle='#25212e';ctx.fillRect(0,0,w,400);
  for(let row=0;row<4;row++)for(let col=0;col<80;col++){ctx.fillStyle=['#514466','#756288','#aaa0b9','#393241'][(row*3+col*7)%4];ctx.fillRect(col*14+3,18+row*14,7,7);}
@@ -21,7 +58,12 @@ function draw(now){
  ctx.fillStyle='#eee8ff';ctx.fillRect(95,122,2,242);ctx.font='12px monospace';ctx.fillText('START',70,388);ctx.fillText('100m',955,388);
  for(let lane=0;lane<5;lane++){ctx.fillStyle='#ded2ff';ctx.font='bold 16px monospace';ctx.fillText(String(lane+1),22,153+lane*48);}
  const active=race.state==='running'||race.state==='finished';
- for(let i=0;i<5;i++){let d=i===2?race.distance:active?Math.min(100,race.elapsed*(7.5+i*.22)):0;athlete(100+d*8.7,156+i*48,i===2?'#fff':['#cbbaff','#514071','#ad91ed','#342a4c'][i>2?i-1:i],active?now*.016+i:0);}
+ for(let i=0;i<5;i++){
+  const pace=7.5+i*.22;
+  const d=i===2?race.distance:active?Math.min(100,race.elapsed*pace):0;
+  const speed=race.state==='running'&&d<100?(i===2?race.speed:pace):0;
+  athlete(100+d*8.7,156+i*48,i===2?'#fff':['#cbbaff','#514071','#ad91ed','#342a4c'][i>2?i-1:i],d,speed,i);
+ }
  if(race.state==='countdown'){ctx.fillStyle='#ffffff';ctx.textAlign='center';ctx.font='bold 64px monospace';ctx.fillText(String(Math.max(1,Math.ceil((race.startAt-now)/1000))),550,240);ctx.font='16px monospace';ctx.fillText('WAIT FOR GO!',550,271);ctx.textAlign='left';}
  if(race.state==='running' && race.elapsed<.65){ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='bold 60px monospace';ctx.fillText('GO!',550,230);ctx.textAlign='left';}
 }
