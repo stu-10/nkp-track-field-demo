@@ -5,11 +5,11 @@
 | Setting | Value |
 |---|---|
 | NKP version | Pending |
-| GitHub owner/repository | Pending |
-| Repository visibility | Pending |
-| Container registry / visibility | GHCR proposed; pending |
+| GitHub owner/repository | stu-10/nkp-track-field-demo |
+| Repository visibility | Public access verified |
+| Container registry / visibility | GHCR; anonymous pull verified |
 | NKP workspace/project | Pending |
-| Target namespace | cloud-native-games proposed |
+| Target namespace | sj-5g6ft (existing NKP project namespace) |
 | LoadBalancer implementation / external address / routing | Pending |
 | Optional ingress class / hostname / TLS | Pending |
 | Git and registry egress | Pending |

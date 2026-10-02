@@ -25,19 +25,58 @@ Application commit → GitHub Actions tests → multi-architecture image in GHCR
 
 CI never calls the cluster API. Manifest-only commits are reconciled without an image build. The digest update does not start another build. Application version and build commit are available at `/version.json` and displayed in the footer. `DEMO_BANNER` is a pod environment variable that can be changed declaratively in the Deployment.
 
-## Before publishing and deploying
+## Connect NKP GitOps
 
-1. Create/select a GitHub repository with default branch `main` and push the project contents at its root.
-2. Enable GitHub Actions. The workflow needs permission to publish packages and push to `main`. It uses `GITHUB_TOKEN`; no personal token is needed for the workflow. If branch rules prohibit bot pushes, replace the direct manifest commit with a deployment pull request workflow before use.
-3. Run the publish workflow once. It replaces the bootstrap image with the repository's lowercase GHCR image and digest. **Do not enable reconciliation while the placeholder bootstrap image remains.**
-4. Make the GHCR package public for an easy public demo, or configure an image-pull secret separately in the application namespace and reference it in the Deployment. A public Git repository does not guarantee its package is public.
-5. Confirm NKP version, target workspace/project, namespace policies and GitOps permissions. The overlay currently creates the namespace `cloud-native-games`; for a pre-provisioned NKP project namespace, change the overlay namespace and remove `namespace.yaml` from its resources.
-6. Point NKP's existing GitOps connection at the same repository, branch `main`, path `./deploy/overlays/demo`. Do not install another Flux instance. If explicit Flux resources are needed, adapt `gitops/flux.yaml.example` to installed CRDs and project RBAC, and apply through the existing platform bootstrap process. Those example resources are not part of the app reconciliation directory.
-7. For private Git, create a read-only Git authentication secret in the GitOps source namespace. Registry authentication is separate. Never commit credentials or kubeconfig.
-8. First validate via `kubectl kustomize deploy/overlays/demo` and a server-side dry run against the intended cluster. The Service uses `type: LoadBalancer` and exposes HTTP on port 80. The NKP cluster needs a configured load balancer implementation and an address pool or cloud provider capable of allocating an address reachable from your browser. After deployment, run `kubectl -n cloud-native-games get svc cloud-native-games --watch` and wait for `EXTERNAL-IP` to show an IP address or hostname. Open `http://<external-ip-or-hostname>/` and check `http://<external-ip-or-hostname>/healthz` returns `ok`. If the address stays `<pending>`, check the Service events with `kubectl -n cloud-native-games describe svc cloud-native-games` and the cluster's load balancer configuration. Allow inbound TCP port 80 through the relevant firewall and ensure routing to the allocated address; a private address is accessible only from connected networks. For temporary local access, use `kubectl -n cloud-native-games port-forward svc/cloud-native-games 8080:80`.
-9. For an optional custom hostname and HTTPS through an ingress controller, adapt `ingress.yaml.example`, rename it to `ingress.yaml`, and add it to overlay resources. Confirm ingress class, hostname, DNS, controller exposure and a TLS secret in the app namespace. The application's LoadBalancer endpoint serves HTTP; it does not configure TLS. No ingress provider is assumed.
+The repository is prepared for your existing NKP project namespace, `sj-5g6ft`. It deploys the application and an HTTP LoadBalancer Service into that namespace; it does not create a namespace or install Flux.
 
-Cluster egress must reach GitHub and GHCR. For an isolated cluster, mirror the image and Git source into reachable services and adapt the workflow and manifests.
+Use these settings in NKP's existing GitOps application/source configuration:
+
+| Setting | Value |
+|---|---|
+| Repository URL | `https://github.com/stu-10/nkp-track-field-demo.git` |
+| Branch | `main` |
+| Application path | `./` (repository root) |
+| Target namespace, if requested | `sj-5g6ft` |
+| Git authentication | Public repository; no credential required |
+| Registry authentication | Public GHCR image; no image-pull secret required |
+| Reconciliation | Enable pruning and wait/health checks where supported |
+
+If NKP separates adding a Git repository from creating an application, add the repository first, then select the branch and application path above. Connecting a URL alone does not select which manifests to reconcile.
+
+The root `kustomization.yaml` includes the prepared demo overlay. If an existing NKP connection already uses `./deploy/overlays/demo`, that path continues to render the same application.
+
+### Already completed
+
+- Application committed to `main`, with automated tests and a publishing workflow.
+- Published image available anonymously from `ghcr.io/stu-10/nkp-track-field-demo`, with Linux amd64 and arm64 variants.
+- Deployment overlay pins the published image by SHA-256 digest; no bootstrap image is used by this overlay.
+- Deployment configured with two replicas, resource limits, health probes, a non-root user, and a read-only filesystem.
+- Service configured as `LoadBalancer`, exposing HTTP port 80 to application port 8080.
+- Overlay targets `sj-5g6ft` without managing the existing namespace.
+- Manifest rendering checked locally and registered as a GitHub Actions check.
+
+No manual first publish, registry secret, ingress, DNS record, TLS certificate, or additional Flux installation is needed for HTTP access through the LoadBalancer address. Optional ingress and Flux examples are outside the application path and are not applied by this connection.
+
+### Cluster requirements
+
+NKP must already provide `sj-5g6ft` and allow its GitOps reconciler to manage Deployments and Services there. A configured load balancer implementation and address pool or cloud provider must allocate an address reachable from your client network. Cluster egress must reach GitHub and GHCR; routing and firewall rules must permit inbound TCP port 80. These cluster-specific capabilities cannot be supplied by this application repository and have not been verified against your cluster.
+
+For an isolated cluster, mirror the image and Git source into reachable services before connecting. If you require a custom hostname and HTTPS, configure the optional ingress example with your controller, DNS and TLS settings separately; the default LoadBalancer endpoint serves HTTP.
+
+### After connecting
+
+```sh
+kubectl -n sj-5g6ft rollout status deployment/cloud-native-games
+kubectl -n sj-5g6ft get svc cloud-native-games --watch
+```
+
+Once `EXTERNAL-IP` shows an IP address or hostname, open `http://<external-ip-or-hostname>/`. The endpoint `http://<external-ip-or-hostname>/healthz` should return `ok`.
+
+If the address stays `<pending>`, inspect the Service events with `kubectl -n sj-5g6ft describe svc cloud-native-games` and check the cluster's load balancer configuration. A private address is reachable only from connected networks. Temporary access is available through `kubectl -n sj-5g6ft port-forward svc/cloud-native-games 8080:80`.
+
+### Future application changes
+
+The publishing workflow tests the app, publishes a multi-architecture GHCR image, and commits its exact digest to the overlay. GitHub Actions has already written the initial digest successfully. Keep its package-write and repository-write permissions enabled and preserve the GHCR package's public visibility. Branch rules must permit the workflow's digest commit; if you later prohibit bot pushes, adapt delivery to deployment pull requests. Manifest-only changes are reconciled directly without rebuilding the application.
 
 ## Files
 
@@ -51,7 +90,9 @@ Cluster egress must reach GitHub and GHCR. For an isolated cluster, mirror the i
 
 ## Verification status
 
-JavaScript syntax and five automated simulation/HTTP checks pass in the creation environment. Docker, kubectl and a browser are not assumed available; image builds, Kubernetes API validation and a real browser play-through must be completed before the live presentation. This is a scaffold for NKP deployment, not a claim that a cluster is already connected.
+JavaScript syntax checks and all five simulation/HTTP tests pass. The pinned public image was pulled and its game, health and version endpoints were exercised under the Deployment's non-root, read-only filesystem and dropped-capability settings. The NKP overlay renders successfully with only a Deployment and LoadBalancer Service in `sj-5g6ft`.
+
+NKP reconciliation, Kubernetes server-side admission, external address allocation and a real browser play-through require the target cluster/client and have not been verified here.
 
 ## Next releases
 
