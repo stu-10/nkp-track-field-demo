@@ -10,30 +10,46 @@ function step(side){race.step(side,performance.now());}
 document.addEventListener('keydown',e=>{if(['a','l','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();if(!e.repeat)step(e.key==='a'||e.key==='ArrowLeft'?'left':'right');}});
 for(const side of ['left','right'])$(side).addEventListener('pointerdown',e=>{e.preventDefault();step(side);});
 document.addEventListener('visibilitychange',()=>{if(document.hidden && ['countdown','running'].includes(race.state)){race.reset();show('Race paused','The tab was hidden. Start a fresh race.');}});
-// Side-on sprint cycle: grounded stance, lifted recovery, and opposing arms.
+// Keyframed sprint poses separate extension, heel recovery, and knee drive.
 function athlete(x,y,color,distance,speed,lane){
  const moving=speed>.05, effort=Math.min(1,speed/10);
- const phase=distance*Math.PI*2/3.2+lane*.7;
- const bob=moving?Math.cos(phase*2)*1.1*effort:0;
- const hip={x:x,y:y-20+bob}, shoulder={x:x+2+3*effort,y:y-34+bob};
+ const phase=distance*Math.PI*2/4.8+lane*.7;
+ const bob=moving?-(Math.sin(phase*2)**2)*1.5*effort:0;
+ const hip={x:x,y:y-23+bob}, shoulder={x:x+2+3*effort,y:y-34+bob};
  const skin=['#c58b62','#ead3bd','#dba579','#a86d4d','#e0b18e'][lane];
  function stroke(points,width,ink){ctx.beginPath();ctx.moveTo(points[0].x,points[0].y);for(const p of points.slice(1))ctx.lineTo(p.x,p.y);ctx.lineWidth=width;ctx.strokeStyle=ink;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();}
  function leg(offset,far){
   const t=((phase/(Math.PI*2)+offset)%1+1)%1;
-  const reach=4+7*effort;
-  // The planted foot moves backwards beneath the body; recovery lifts the shoe.
-  const foot=moving?(t<.5?{x:x+reach*(1-4*t),y:y}:{x:x-reach*Math.cos((t-.5)*Math.PI*2),y:y-Math.sin((t-.5)*Math.PI*2)*(5+10*effort)}):{x:x+(far?-4:5),y:y};
-  const dx=foot.x-hip.x,dy=foot.y-hip.y,length=Math.hypot(dx,dy);
-  const bend=Math.sqrt(Math.max(0,12*12-length*length/4));
-  const knee={x:(hip.x+foot.x)/2+bend*dy/length,y:(hip.y+foot.y)/2-bend*dx/length};
+  // Angles are measured from vertical. Knee flexion folds the heel
+  // behind the thigh instead of forcing every knee into a crouched pose.
+  const poses=[
+   [0,.35,.12],       // extended leg reaching for touchdown
+   [.18,-.15,.08],    // almost straight support leg beneath the hip
+   [.34,-.95,.35],    // full backwards drive / toe-off
+   [.5,-.65,2.15],    // heel recovered high behind the body
+   [.7,1.05,2.25],    // forward knee drive, heel tucked under thigh
+   [.86,1.1,1.05],    // lower leg unfolds for the next contact
+   [1,.35,.12]
+  ];
+  let thigh=far?-.15:.15,flex=.08;
+  if(moving){
+   const i=poses.findIndex((p,index)=>index>0&&t<=p[0]);
+   const a=poses[i-1],b=poses[i],u=(t-a[0])/(b[0]-a[0]);
+   const blend=u*u*(3-2*u);
+   thigh=(a[1]+(b[1]-a[1])*blend)*(.55+.45*effort);
+   flex=.08+(a[2]+(b[2]-a[2])*blend-.08)*(.5+.5*effort);
+  }
+  const knee={x:hip.x+Math.sin(thigh)*12,y:hip.y+Math.cos(thigh)*12};
+  const foot={x:knee.x+Math.sin(thigh-flex)*12,y:knee.y+Math.cos(thigh-flex)*12};
   stroke([hip,knee],5,far?'#767080':'#ece9f5');
   stroke([knee,foot],3.5,far?'#956a50':skin);
   stroke([{x:foot.x-2,y:foot.y},{x:foot.x+5,y:foot.y-1}],3,far?'#292332':'#fff');
  }
  function arm(offset,far){
-  const swing=moving?Math.sin(phase+offset)*.9*effort:0;
+  const swing=moving?-Math.cos(phase+offset)*1.05*(.5+.5*effort):-.15;
   const elbow={x:shoulder.x+Math.sin(swing)*9,y:shoulder.y+Math.cos(swing)*9};
-  const hand={x:elbow.x+Math.cos(swing)*8,y:elbow.y-Math.sin(swing)*8-3};
+  // The bent forearm swings with the upper arm, driving towards the face.
+  const hand={x:elbow.x+Math.cos(swing)*8,y:elbow.y-Math.sin(swing)*8};
   stroke([shoulder,elbow,hand],3,far?'#956a50':skin);
  }
  ctx.save();
