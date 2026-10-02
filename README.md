@@ -1,6 +1,6 @@
 # Cloud Native Games
 
-A purple, white and charcoal retro athletics demo for Nutanix Kubernetes Platform. First release: a browser-based 100m sprint, original canvas artwork, keyboard/touch controls, false starts and personal bests stored in the browser.
+A purple, white and charcoal retro athletics demo for Nutanix Kubernetes Platform. Browser-based athletics with a solo 100m sprint and a local two-player VS race, original canvas artwork, keyboard/touch controls, false starts and solo personal bests stored in the browser.
 
 ## Run locally
 
@@ -10,7 +10,12 @@ Requires Node.js 22 or newer. No npm install is needed.
 npm start
 ```
 
-Open http://localhost:8080. Select Start race, wait three seconds for GO, then alternate A/L or the left/right arrow keys. Touch players use the two step buttons. Held keys and repeated presses of the same side do not accelerate the athlete. Hiding the browser tab resets an active race. Scores remain on that browser only.
+Open http://localhost:8080 and choose a game from the menu:
+
+- **100m Sprint:** the original solo race. Select Start race, wait three seconds for GO, then alternate A/L or the left/right arrow keys. Touch players use the two step buttons. Solo personal bests remain stored in that browser.
+- **VS Race:** two players on one keyboard/shared screen. Player 1 (white) alternates **A/S**; Player 2 (gold) alternates **K/L**. Both start on the same GO, and the first to 100m wins. A false start awards the race to the other player; equal finish times within one millisecond produce a dead heat. Each player also has separate touch buttons. VS results do not change solo personal bests.
+
+Use Game menu to switch events; switching resets the current race. Held keys and repeated presses of the same side do not accelerate an athlete. Hiding the browser tab resets an active race. VS is local multiplayer, so no second browser, network session, or backend service is required.
 
 ```sh
 npm run check
@@ -90,9 +95,9 @@ The publishing workflow tests the app, publishes a multi-architecture GHCR image
 
 ## Verification status
 
-JavaScript syntax checks and all five simulation/HTTP tests pass. The pinned public image was pulled and its game, health and version endpoints were exercised under the Deployment's non-root, read-only filesystem and dropped-capability settings. The NKP overlay renders successfully with only a Deployment and LoadBalancer Service in `sj-5g6ft`.
+JavaScript syntax checks and all eleven simulation/HTTP tests pass. The pinned public image was pulled and its game, health and version endpoints were exercised under the Deployment's non-root, read-only filesystem and dropped-capability settings. The NKP overlay renders successfully with only a Deployment and LoadBalancer Service in `sj-5g6ft`.
 
-NKP reconciliation, Kubernetes server-side admission, external address allocation and a real browser play-through require the target cluster/client and have not been verified here.
+NKP reconciliation, Kubernetes server-side admission, external address allocation require the target cluster/client and have not been verified here. Local Chromium checks cover solo and VS racing, key mappings, false starts, replay, menu switching and touch controls.
 
 ## Next releases
 

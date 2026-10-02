@@ -23,3 +23,28 @@ export class Race {
     this.speed=Math.min(12.5,this.speed+0.85); return true;
   }
 }
+
+// Two racers share a starting gun, but keep independent input and physics.
+export class VersusRace {
+  constructor() { this.players=[new Race(),new Race()]; this.reset(); }
+  reset() { this.players.forEach(p=>p.reset()); this.state='ready'; this.winner=null; this.offender=null; this.startAt=0; }
+  start(now) { this.reset(); this.players.forEach(p=>p.start(now)); this.startAt=now+3000; this.state='countdown'; }
+  get elapsed() { return this.state==='finished' ? Math.min(...this.players.filter(p=>p.state==='finished').map(p=>p.elapsed)) : Math.max(...this.players.map(p=>p.elapsed)); }
+  step(player,side,now) {
+    if (!['countdown','running'].includes(this.state)) return false;
+    const accepted=this.players[player].step(side,now);
+    if (this.players[player].state==='false-start') { this.state='false-start'; this.offender=player; this.winner=1-player; }
+    return accepted;
+  }
+  update(now,dt) {
+    if (!['countdown','running'].includes(this.state)) return;
+    this.players.forEach(p=>p.update(now,dt));
+    if (now>=this.startAt) this.state='running';
+    const finishers=this.players.map((p,i)=>({p,i})).filter(({p})=>p.state==='finished');
+    if (finishers.length) {
+      finishers.sort((a,b)=>a.p.elapsed-b.p.elapsed);
+      this.winner=finishers.length===2 && Math.abs(finishers[0].p.elapsed-finishers[1].p.elapsed)<.001 ? null : finishers[0].i;
+      this.state='finished';
+    }
+  }
+}
