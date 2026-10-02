@@ -6,4 +6,4 @@ resources:
 images:
   - name: ghcr.io/stu-10/nkp-track-field-demo
     newName: ghcr.io/stu-10/nkp-track-field-demo
-    digest: sha256:0dc786a76750a2284dd47734a896a0e9730583537e31cffe77083148abe0cad3
+    digest: sha256:769826ffb73455edcaaff18924f17cb53dc81729cbf09a8a7a348a09a06569d9
