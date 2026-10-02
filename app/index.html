@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cloud Native Games · 100m Sprint</title><link rel="stylesheet" href="/style.css"></head>
+<body><main>
+<header><a class="wordmark" href="/">NUTANIX <span>DEMO LAB</span></a><span class="pill">KUBERNETES EDITION</span></header>
+<section class="intro"><p class="eyebrow">ON YOUR MARKS. COMMIT. DEPLOY.</p><h1>Cloud Native <span>Games.</span></h1><p>A little arcade energy. A cloud native finish.</p></section>
+<section class="arcade" aria-label="100 metre sprint game">
+<div class="game-top"><div><span class="eyebrow">EVENT 01</span><h2>100m Sprint</h2></div><span class="live"><span>●</span> READY TO RACE</span></div>
+<div class="scoreboard"><div><span>TIME</span><strong id="time">0.00<span>s</span></strong></div><div><span>DISTANCE</span><strong id="distance">0<span>m</span></strong></div><div><span>PERSONAL BEST</span><strong id="best">—</strong></div></div>
+<div class="stadium"><canvas id="track" width="1100" height="400" aria-label="Animated purple athletics track"></canvas><div class="overlay" id="overlay"><p id="callout">CHASE YOUR PERSONAL BEST</p><h3 id="headline">Ready, athlete?</h3><p id="message">Alternate A and L to sprint. Timing is everything.</p><button id="start">Start race <span>↗</span></button></div></div>
+<div class="controls"><div><p><kbd>A</kbd> <span>alternate</span> <kbd>L</kbd></p><small>Or use ← and → · Ignore held keys · Wait for GO!</small></div><div class="touch"><button id="left" aria-label="Left running step">LEFT STEP</button><button id="right" aria-label="Right running step">RIGHT STEP</button></div></div>
+<p id="status" class="sr-only" role="status" aria-live="polite">Ready to race.</p>
+</section>
+<section class="platform"><div><span class="eyebrow">FROM COMMIT TO COMPETITION</span><h2>Small game. Big platform story.</h2><p id="banner">Built to run anywhere. Powered by NKP.</p></div><div class="chips"><span>Containerised</span><span>GitOps ready</span><span>Cloud native</span></div></section>
+<footer><span>A retro athletics demo for Nutanix Kubernetes Platform</span><span id="version">v0.1.0 · local</span></footer>
+</main><script type="module" src="/game.js"></script></body></html>
