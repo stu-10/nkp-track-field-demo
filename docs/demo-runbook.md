@@ -9,7 +9,7 @@
 | Repository visibility | Public access verified |
 | Container registry / visibility | GHCR; anonymous pull verified |
 | NKP workspace/project | Pending |
-| Target namespace | sj-5g6ft (existing NKP project namespace) |
+| Target namespace | Selected per cluster/project in NKP GitOps |
 | LoadBalancer implementation / external address / routing | Pending |
 | Optional ingress class / hostname / TLS | Pending |
 | Git and registry egress | Pending |

@@ -32,7 +32,7 @@ CI never calls the cluster API. Manifest-only commits are reconciled without an 
 
 ## Connect NKP GitOps
 
-The repository is prepared for your existing NKP project namespace, `sj-5g6ft`. It deploys the application and an HTTP LoadBalancer Service into that namespace; it does not create a namespace or install Flux.
+The repository deploys the application and an HTTP LoadBalancer Service into the target namespace selected in NKP GitOps. The manifests intentionally omit a fixed namespace, so the same repository can be used across clusters and projects. It does not create a namespace or install Flux.
 
 Use these settings in NKP's existing GitOps application/source configuration:
 
@@ -41,7 +41,7 @@ Use these settings in NKP's existing GitOps application/source configuration:
 | Repository URL | `https://github.com/stu-10/nkp-track-field-demo.git` |
 | Branch | `main` |
 | Application path | `./` (repository root) |
-| Target namespace, if requested | `sj-5g6ft` |
+| Target namespace | Select the existing project namespace for that cluster in NKP |
 | Git authentication | Public repository; no credential required |
 | Registry authentication | Public GHCR image; no image-pull secret required |
 | Reconciliation | Enable pruning and wait/health checks where supported |
@@ -57,27 +57,29 @@ The root `kustomization.yaml` includes the prepared demo overlay. If an existing
 - Deployment overlay pins the published image by SHA-256 digest; no bootstrap image is used by this overlay.
 - Deployment configured with two replicas, resource limits, health probes, a non-root user, and a read-only filesystem.
 - Service configured as `LoadBalancer`, exposing HTTP port 80 to application port 8080.
-- Overlay targets `sj-5g6ft` without managing the existing namespace.
+- Overlay leaves namespace assignment to NKP GitOps without creating or managing a namespace.
 - Manifest rendering checked locally and registered as a GitHub Actions check.
 
 No manual first publish, registry secret, ingress, DNS record, TLS certificate, or additional Flux installation is needed for HTTP access through the LoadBalancer address. Optional ingress and Flux examples are outside the application path and are not applied by this connection.
 
 ### Cluster requirements
 
-NKP must already provide `sj-5g6ft` and allow its GitOps reconciler to manage Deployments and Services there. A configured load balancer implementation and address pool or cloud provider must allocate an address reachable from your client network. Cluster egress must reach GitHub and GHCR; routing and firewall rules must permit inbound TCP port 80. These cluster-specific capabilities cannot be supplied by this application repository and have not been verified against your cluster.
+NKP must provide the selected project namespace and configure its GitOps application to apply resources into that namespace (Flux `spec.targetNamespace` or the equivalent NKP setting). Omitting namespace fields alone does not select the destination; confirm the application target namespace in NKP. The GitOps reconciler must have permission to manage Deployments and Services there. A configured load balancer implementation and address pool or cloud provider must allocate an address reachable from your client network. Cluster egress must reach GitHub and GHCR; routing and firewall rules must permit inbound TCP port 80. These cluster-specific capabilities cannot be supplied by this application repository and have not been verified against your cluster.
 
 For an isolated cluster, mirror the image and Git source into reachable services before connecting. If you require a custom hostname and HTTPS, configure the optional ingress example with your controller, DNS and TLS settings separately; the default LoadBalancer endpoint serves HTTP.
 
 ### After connecting
 
 ```sh
-kubectl -n sj-5g6ft rollout status deployment/cloud-native-games
-kubectl -n sj-5g6ft get svc cloud-native-games --watch
+# Set this to the target namespace selected in NKP for this cluster.
+NKP_NAMESPACE="your-project-namespace"
+kubectl -n "$NKP_NAMESPACE" rollout status deployment/cloud-native-games
+kubectl -n "$NKP_NAMESPACE" get svc cloud-native-games --watch
 ```
 
 Once `EXTERNAL-IP` shows an IP address or hostname, open `http://<external-ip-or-hostname>/`. The endpoint `http://<external-ip-or-hostname>/healthz` should return `ok`.
 
-If the address stays `<pending>`, inspect the Service events with `kubectl -n sj-5g6ft describe svc cloud-native-games` and check the cluster's load balancer configuration. A private address is reachable only from connected networks. Temporary access is available through `kubectl -n sj-5g6ft port-forward svc/cloud-native-games 8080:80`.
+If the address stays `<pending>`, inspect the Service events with `kubectl -n "$NKP_NAMESPACE" describe svc cloud-native-games` and check the cluster's load balancer configuration. A private address is reachable only from connected networks. Temporary access is available through `kubectl -n "$NKP_NAMESPACE" port-forward svc/cloud-native-games 8080:80`.
 
 ### Future application changes
 
@@ -95,7 +97,7 @@ The publishing workflow tests the app, publishes a multi-architecture GHCR image
 
 ## Verification status
 
-JavaScript syntax checks and all eleven simulation/HTTP tests pass. The pinned public image was pulled and its game, health and version endpoints were exercised under the Deployment's non-root, read-only filesystem and dropped-capability settings. The NKP overlay renders successfully with only a Deployment and LoadBalancer Service in `sj-5g6ft`.
+JavaScript syntax checks and all eleven simulation/HTTP tests pass. The pinned public image was pulled and its game, health and version endpoints were exercised under the Deployment's non-root, read-only filesystem and dropped-capability settings. The NKP overlay renders successfully with only a Deployment and LoadBalancer Service, both without fixed namespace fields.
 
 NKP reconciliation, Kubernetes server-side admission, external address allocation require the target cluster/client and have not been verified here. Local Chromium checks cover solo and VS racing, key mappings, false starts, replay, menu switching and touch controls.
 
