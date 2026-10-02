@@ -10,7 +10,8 @@
 | Container registry / visibility | GHCR proposed; pending |
 | NKP workspace/project | Pending |
 | Target namespace | cloud-native-games proposed |
-| Ingress class / hostname / TLS | Pending |
+| LoadBalancer implementation / external address / routing | Pending |
+| Optional ingress class / hostname / TLS | Pending |
 | Git and registry egress | Pending |
 | GitOps source namespace / RBAC | Pending |
 
@@ -28,6 +29,7 @@
 - Keyboard and touch race complete; early input causes a false start; replay works.
 - Image builds for the target architecture and runs under the configured security context.
 - Manifests validate with the installed Kubernetes and Flux CRDs.
-- Image pulls succeed, probes are healthy, and DNS/TLS work.
+- Image pulls succeed, probes are healthy, and the LoadBalancer address serves the game and `/healthz` from the intended client network on port 80.
+- DNS/TLS work if the optional HTTPS ingress is configured.
 - A merged app change reaches the browser; digest rollback succeeds.
 - GitOps drift correction and Kubernetes pod replacement are demonstrated.

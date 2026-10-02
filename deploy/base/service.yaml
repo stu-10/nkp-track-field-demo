@@ -3,6 +3,7 @@ kind: Service
 metadata:
   name: cloud-native-games
 spec:
+  type: LoadBalancer
   selector:
     app: cloud-native-games
   ports:
